@@ -46,7 +46,10 @@ import mapboxgl from 'mapbox-gl'; // or "const mapboxgl = require('mapbox-gl');"
             container: 'map', // container ID
             style: 'mapbox://styles/mapbox/dark-v10', // style URL
             center: monument, // starting position [lng, lat]
-            zoom: 9 // starting zoom
+            zoom: 9, // starting zoom
+            pitch: 45,
+            bearing: -17.6,
+            antialias: true
         });
         // Create a default Marker and add it to the map.
           for(var i = 0; i < this.places.length; i++) {
@@ -265,6 +268,57 @@ import mapboxgl from 'mapbox-gl'; // or "const mapboxgl = require('mapbox-gl');"
         'waterway-label'
         );
         });
+
+        //displaying buildings in 3D
+        map.on('load', () => {
+        // Insert the layer beneath any symbol layer.
+        const layers = map.getStyle().layers;
+        const labelLayerId = layers.find(
+        (layer) => layer.type === 'symbol' && layer.layout['text-field']
+        ).id;
+        
+        // The 'building' layer in the Mapbox Streets
+        // vector tileset contains building height data
+        // from OpenStreetMap.
+        map.addLayer(
+        {
+        'id': 'add-3d-buildings',
+        'source': 'composite',
+        'source-layer': 'building',
+        'filter': ['==', 'extrude', 'true'],
+        'type': 'fill-extrusion',
+        'minzoom': 15,
+        'paint': {
+        'fill-extrusion-color': '#aaa',
+        
+        // Use an 'interpolate' expression to
+        // add a smooth transition effect to
+        // the buildings as the user zooms in.
+        'fill-extrusion-height': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        15,
+        0,
+        15.05,
+        ['get', 'height']
+        ],
+        'fill-extrusion-base': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        15,
+        0,
+        15.05,
+        ['get', 'min_height']
+        ],
+        'fill-extrusion-opacity': 0.6
+        }
+        },
+        labelLayerId
+        );
+        });
+
       }
     },
   };
